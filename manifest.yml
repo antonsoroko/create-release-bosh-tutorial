@@ -1,0 +1,58 @@
+---
+name: bosh-tutorial-deployment
+director_uuid: 57ed8b21-ca98-49e7-aafe-ca81f8d07043
+
+releases:
+- {name: ardo_app, version: latest}
+
+resource_pools:
+- name: vms
+  network: default
+  stemcell:
+    name: bosh-openstack-kvm-ubuntu-trusty-go_agent
+    version: 3215.4
+  cloud_properties:
+    instance_type: m1.small
+
+networks:
+- name: default
+  type: dynamic
+  cloud_properties:
+    net_id: a2f6db65-99ca-481a-9e97-fc9952f8b791
+    security_groups:
+    - bosh
+
+compilation:
+  workers: 1
+  network: default
+  reuse_compilation_vms: true
+  cloud_properties:
+    instance_type: m1.small
+
+update:
+  canaries: 1
+  max_in_flight: 3
+  canary_watch_time: 15000-30000
+  update_watch_time: 15000-300000
+
+jobs:
+- name: bg_worker
+  instances: 1
+  templates:
+  - {name: bg_worker, release: ardo_app}
+  resource_pool: vms
+  networks:
+  - name: default
+
+- name: web_ui
+  instances: 1
+  templates:
+  - {name: web_ui, release: ardo_app}
+  resource_pool: vms
+  networks:
+  - name: default
+
+properties:
+  web_ui:
+    port: 80
+
